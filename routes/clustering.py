@@ -9,12 +9,6 @@ router = APIRouter(prefix="/clustering", tags=["Clustering"])
 # Cargar pipeline solo una vez
 pipeline_kmeans = joblib.load("kmeans_pipeline.pkl")
 
-@router.post("/predict2")
-def predict_cluster(data: InputKmeans):
-    df = pd.DataFrame([data.dict()])
-    cluster = pipeline_kmeans.predict(df)[0]
-    return {"cluster_predicho": int(cluster)}
-
 @router.post("/predict")
 def predict_cluster_with_distances(data: InputKmeans):
     df = pd.DataFrame([data.dict()])
