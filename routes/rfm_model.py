@@ -94,6 +94,8 @@ def predict_cluster(data: InputRFM):
     kmeans_model = pipeline_rfm.named_steps['kmeans']
     
     transformed = preprocesador.transform(df)
+    manual_feature_names = ['recency', "frequency", 'quantity_purchases', 'quantity_products']
+    transformed_dict = dict(zip(manual_feature_names, transformed[0]))
     cluster = kmeans_model.predict(transformed)[0]
 
     centroides = kmeans_model.cluster_centers_
@@ -101,7 +103,7 @@ def predict_cluster(data: InputRFM):
     distancias_dict = [float(d) for d in distancias]
 
     return {
-        "rfm_values": transformed.to_dict()[0],
+        "rfm_values": transformed_dict,
         "cluster": int(cluster),
         "distancias": distancias_dict
     }
