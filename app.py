@@ -22,6 +22,6 @@ app.add_middleware(
 )
 
 app.include_router(clustering.router, prefix="/api/v1")
-app.include_router(nearest_neighbors.router_knn, prefix="/api/v1")
+app.include_router(nearest_neighbors.router_neighbors, prefix="/api/v1")
 app.include_router(rfm_model.router_rfm, prefix="/api/v1")
 

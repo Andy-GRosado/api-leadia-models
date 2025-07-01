@@ -1,23 +1,32 @@
 from fastapi import APIRouter
-from models.input_knn import InputKnn
+from models.input_nn import InputNearestNeighbors
 import pandas as pd
 import joblib
 
-router_knn = APIRouter(prefix="/neighbors", tags=["Nearest Neighbors"])
+# Create a parent router for the common /neighbors path
+router_neighbors = APIRouter(prefix="/neighbors", tags=["Nearest Neighbors"])
+
+# Create child routers for clients and prospects
+router_nn_clients = APIRouter(prefix="/clients", tags=["Nearest Neighbors clients"])
+router_nn_prospects = APIRouter(prefix="/prospects", tags=["Nearest Neighbors prospects"])
 
 # Cargar pipeline solo una vez
-pipeline_knn = joblib.load("knn_pipeline.pkl")
-df_knn = joblib.load("df_knn.pkl")
+pipeline_nn_prospects = joblib.load("dir/nearest_neighbors/nearest_neighbors_prospects.pkl")
+df_nn_prospects = joblib.load("dir/nearest_neighbors/df_prospects.pkl")
 
-@router_knn.post("/predict")
-def get_nearest_neighbors(data: InputKnn):
+pipeline_nn_clients = joblib.load("dir/nearest_neighbors/nearest_neighbors_clients.pkl")
+df_nn_clients = joblib.load("dir/nearest_neighbors/df_clients.pkl")
+
+
+@router_nn_prospects.post("/predict")
+def get_nearest_neighbors_prospects(data: InputNearestNeighbors):
     df = pd.DataFrame([data.dict()])
-    preprocesador = pipeline_knn.named_steps['preprocessor']
-    knn_model = pipeline_knn.named_steps['model']
+    preprocesador = pipeline_nn_prospects.named_steps['preprocessor']
+    nn_model = pipeline_nn_prospects.named_steps['model']
     
     transformed = preprocesador.transform(df)
-    (distances, indices) = knn_model.kneighbors(transformed)
-    indices_val = df_knn.iloc[indices[0]].index.tolist()
+    (distances, indices) = nn_model.kneighbors(transformed)
+    indices_val = df_nn_prospects.iloc[indices[0]].index.tolist()
     distances_val = distances[0].tolist()
 
     result = {}
@@ -27,3 +36,25 @@ def get_nearest_neighbors(data: InputKnn):
     return {
         "neighbors": result
     }
+
+@router_nn_clients.post("/predict")
+def get_nearest_neighbors_clients(data: InputNearestNeighbors):
+    df = pd.DataFrame([data.dict()])
+    preprocesador = pipeline_nn_clients.named_steps['preprocessor']
+    nn_model = pipeline_nn_clients.named_steps['model']
+    
+    transformed = preprocesador.transform(df)
+    (distances, indices) = nn_model.kneighbors(transformed)
+    indices_val = df_nn_clients.iloc[indices[0]].index.tolist()
+    distances_val = distances[0].tolist()
+
+    result = {}
+    for index, value in enumerate(indices_val):
+        result[value] = distances_val[index]
+
+    return {
+        "neighbors": result
+    }
+
+router_neighbors.include_router(router_nn_clients)
+router_neighbors.include_router(router_nn_prospects)
